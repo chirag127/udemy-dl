@@ -36,7 +36,6 @@ from udemy.logger import logger
 
 
 def extract_cookie_string(raw_cookies):
-    cookies = {}
     try:
         access_token = re.search(
             r"(?i)(?:access_token=(?P<access_token>\w+))", raw_cookies
@@ -55,8 +54,7 @@ def extract_cookie_string(raw_cookies):
         sys.stdout.flush()
         sys.exit(0)
     access_token = access_token.group("access_token")
-    cookies.update({"access_token": access_token})
-    return cookies
+    return {"access_token": access_token}
 
 
 def extract_url_or_courses(url_or_filepath):
@@ -124,8 +122,8 @@ def to_file(filename, fmode, content, encoding="utf-8", errors="ignore"):
         with open(filename, fmode, encoding=encoding, errors=errors) as fd:
             fd.write(content)
         retVal = {"status": "True", "msg": "download"}
-    except (OSError, Exception, UnicodeDecodeError) as e:
-        retVal = {"status": "False", "msg": "{}".format(e)}
+    except Exception as e:
+        retVal = {"status": "False", "msg": f"{e}"}
 
     return retVal
 
@@ -278,10 +276,10 @@ def search_regex(
     elif default is not NO_DEFAULT:
         return default
     elif fatal:
-        print("[-] Unable to extract %s" % _name)
+        print(f"[-] Unable to extract {_name}")
         exit(0)
     else:
-        print("[-] unable to extract %s" % _name)
+        print(f"[-] unable to extract {_name}")
         exit(0)
 
 
@@ -291,7 +289,7 @@ def parse_json(json_string, video_id, transform_source=None, fatal=True):
     try:
         return json.loads(json_string)
     except ValueError as ve:
-        errmsg = "[-] %s: Failed to parse JSON " % video_id
+        errmsg = f"[-] {video_id}: Failed to parse JSON "
         if fatal:
             print(errmsg, ve)
         else:
@@ -323,8 +321,7 @@ def js_to_json(code):
             )
 
         for regex, base in INTEGER_TABLE:
-            im = re.match(regex, v)
-            if im:
+            if im := re.match(regex, v):
                 i = int(im.group(1), base)
                 return '"%d":' % i if v.endswith(":") else "%d" % i
 

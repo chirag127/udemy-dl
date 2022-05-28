@@ -64,17 +64,15 @@ class Udemy:
         return text
 
     def _sanitize(self, unsafetext):
-        text = sanitize(
-            slugify(unsafetext, lower=False, spaces=True, ok=SLUG_OK + "().[]")
+        return sanitize(
+            slugify(unsafetext, lower=False, spaces=True, ok=f"{SLUG_OK}().[]")
         )
-        return text
 
     def _course_name(self, url):
-        mobj = re.search(
+        if mobj := re.search(
             r"(?i)(?://(?P<portal_name>.+?).udemy.com/(?:course(/draft)*/)?(?P<name_or_id>[a-zA-Z0-9_-]+))",
             url,
-        )
-        if mobj:
+        ):
             return mobj.group("portal_name"), mobj.group("name_or_id")
 
     def _login(self, username="", password="", cookies="", cache_session=False):
@@ -103,11 +101,12 @@ class Udemy:
                     username = getpass.getuser(prompt="Username : ")
                     password = getpass.getpass(prompt="Password : ")
                 print("\n")
-                if not cookies and not username and not password:
-                    logger.error(
-                        msg=f"You should either provide Fresh Access Token or Username/Password to create new udemy session.."
-                    )
-                    sys.exit(0)
+            if not cookies and not username and not password:
+                logger.error(
+                    msg="You should either provide Fresh Access Token or Username/Password to create new udemy session.."
+                )
+
+                sys.exit(0)
         if not cookies:
             auth.username = username
             auth.password = password
@@ -146,7 +145,7 @@ class Udemy:
             logger.error(msg=f"Udemy Says: Connection error, {error}")
             time.sleep(0.8)
             sys.exit(0)
-        except (ValueError, Exception) as error:
+        except Exception as error:
             logger.error(msg=f"Udemy Says: {error} on {url}")
             time.sleep(0.8)
             sys.exit(0)
@@ -163,7 +162,7 @@ class Udemy:
             logger.error(msg=f"Udemy Says: Connection error, {error}")
             time.sleep(0.8)
             sys.exit(0)
-        except (ValueError, Exception) as error:
+        except Exception as error:
             logger.error(msg=f"Udemy Says: {error}")
             time.sleep(0.8)
             sys.exit(0)
@@ -181,7 +180,7 @@ class Udemy:
             logger.error(msg=f"Udemy Says: Connection error, {error}")
             time.sleep(0.8)
             sys.exit(0)
-        except (ValueError, Exception) as error:
+        except Exception as error:
             logger.error(msg=f"Udemy Says: {error}")
             time.sleep(0.8)
             sys.exit(0)
@@ -198,13 +197,12 @@ class Udemy:
             logger.error(msg=f"Udemy Says: Connection error, {error}")
             time.sleep(0.8)
             sys.exit(0)
-        except (ValueError, Exception) as error:
+        except Exception as error:
             logger.error(msg=f"Udemy Says: {error}")
             time.sleep(0.8)
             sys.exit(0)
         else:
-            results = webpage.get("results", [])
-            if results:
+            if results := webpage.get("results", []):
                 [
                     courses_lists.extend(courses.get("courses", []))
                     for courses in results
@@ -217,8 +215,9 @@ class Udemy:
             _urls = []
             courses = [
                 dict(tupleized)
-                for tupleized in set(tuple(item.items()) for item in courses)
+                for tupleized in {tuple(item.items()) for item in courses}
             ]
+
             for entry in courses:
                 logger.progress(msg="Fetching all enrolled course(s) url(s).. ")
                 url = entry.get("url")
@@ -298,23 +297,22 @@ class Udemy:
         if course:
             course.update({"portal_name": portal_name})
             return course.get("id"), course
-        if not course:
-            logger.failed(msg="Downloading course information, course id not found .. ")
-            logger.info(
-                msg="It seems either you are not enrolled or you have to visit the course atleast once while you are logged in.",
-                new_line=True,
-            )
-            logger.info(
-                msg="Trying to logout now...",
-                new_line=True,
-            )
-            if not self._cookies:
-                self._logout()
-            logger.info(
-                msg="Logged out successfully.",
-                new_line=True,
-            )
-            sys.exit(0)
+        logger.failed(msg="Downloading course information, course id not found .. ")
+        logger.info(
+            msg="It seems either you are not enrolled or you have to visit the course atleast once while you are logged in.",
+            new_line=True,
+        )
+        logger.info(
+            msg="Trying to logout now...",
+            new_line=True,
+        )
+        if not self._cookies:
+            self._logout()
+        logger.info(
+            msg="Logged out successfully.",
+            new_line=True,
+        )
+        sys.exit(0)
 
     def _extract_large_course_content(self, url):
         url = url.replace("10000", "50") if url.endswith("10000") else url
@@ -355,7 +353,7 @@ class Udemy:
             logger.error(msg=f"Udemy Says: Connection error, {error}")
             time.sleep(0.8)
             sys.exit(0)
-        except (ValueError, Exception):
+        except Exception:
             resp = self._extract_large_course_content(url=url)
             return resp
         else:
@@ -500,21 +498,21 @@ class Udemy:
                     continue
                 if label.lower() == "audio":
                     continue
-                height = label if label else None
-                if height == "2160":
-                    width = "3840"
+                height = label or None
+                if height == "1080":
+                    width = "1920"
                 elif height == "1440":
                     width = "2560"
-                elif height == "1080":
-                    width = "1920"
-                elif height == "720":
-                    width = "1280"
-                elif height == "480":
-                    width = "854"
-                elif height == "360":
-                    width = "640"
+                elif height == "2160":
+                    width = "3840"
                 elif height == "240":
                     width = "426"
+                elif height == "360":
+                    width = "640"
+                elif height == "480":
+                    width = "854"
+                elif height == "720":
+                    width = "1280"
                 else:
                     width = "256"
                 if (
@@ -522,8 +520,7 @@ class Udemy:
                     or "m3u8" in download_url
                 ):
                     if not skip_hls_stream:
-                        out = self._extract_m3u8(download_url)
-                        if out:
+                        if out := self._extract_m3u8(download_url):
                             _temp.extend(out)
                 else:
                     _type = source.get("type")
@@ -614,7 +611,6 @@ class Udemy:
 
     def _real_extract(self, url="", skip_hls_stream=False):
 
-        _udemy = {}
         course_id, course_info = self._extract_course_info(url)
 
         if course_info and isinstance(course_info, dict):
@@ -624,9 +620,7 @@ class Udemy:
 
         course_json = self._extract_course_json(url, course_id, portal_name)
         course = course_json.get("results")
-        resource = course_json.get("detail")
-
-        if resource:
+        if resource := course_json.get("detail"):
             if not self._cookies:
                 logger.error(
                     msg=f"Udemy Says : '{resource}' Run udemy-dl against course within few seconds"
@@ -647,16 +641,18 @@ class Udemy:
             )
             sys.exit(0)
 
-        _udemy["access_token"] = self._access_token
-        _udemy["course_id"] = course_id
-        _udemy["title"] = title
-        _udemy["course_title"] = course_title
-        _udemy["chapters"] = []
-
-        counter = -1
+        _udemy = {
+            "access_token": self._access_token,
+            "course_id": course_id,
+            "title": title,
+            "course_title": course_title,
+            "chapters": [],
+        }
 
         if course:
             lecture_counter = 0
+            counter = -1
+
             for entry in course:
                 clazz = entry.get("_class")
                 asset = entry.get("asset")
@@ -805,11 +801,10 @@ class Udemy:
                     _udemy["chapters"][counter]["lectures_count"] = len(lectures)
             _udemy["total_chapters"] = len(_udemy["chapters"])
             _udemy["total_lectures"] = sum(
-                [
-                    entry.get("lectures_count", 0)
-                    for entry in _udemy["chapters"]
-                    if entry
-                ]
+                entry.get("lectures_count", 0)
+                for entry in _udemy["chapters"]
+                if entry
             )
+
 
         return _udemy

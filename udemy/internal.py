@@ -42,9 +42,12 @@ class InternUdemyCourses(UdemyCourses, Udemy):
         super(InternUdemyCourses, self).__init__(*args, **kwargs)
 
     def _fetch_course(self):
-        auth = {}
-        if not self._cookies:
-            auth = self._login(username=self._username, password=self._password)
+        auth = (
+            {}
+            if self._cookies
+            else self._login(username=self._username, password=self._password)
+        )
+
         if not auth and self._cookies:
             auth = self._login(cookies=self._cookies)
         if auth.get("login") == "successful":
@@ -67,13 +70,16 @@ class InternUdemyCourse(UdemyCourse, Udemy):
     def _fetch_course(self):
         if self._have_basic:
             return
-        auth = {}
-        if not self._cookies:
-            auth = self._login(
+        auth = (
+            {}
+            if self._cookies
+            else self._login(
                 username=self._username,
                 password=self._password,
                 cache_session=self._cache_session,
             )
+        )
+
         if not auth and self._cookies:
             auth = self._login(cookies=self._cookies, cache_session=self._cache_session)
         if auth.get("login") == "successful":
@@ -187,7 +193,7 @@ class InternUdemyLectureStream(UdemyLectureStream):
         self._token = parent._access_token
         height = sources.get("height", "0")
         width = sources.get("width", "0")
-        self._resolution = "%sx%s" % (width, height)
+        self._resolution = f"{width}x{height}"
         self._dimension = width, height
         self._quality = int(height)
         self._is_hls = "hls" in self._mediatype
@@ -205,10 +211,9 @@ class InternUdemyLectureAssets(UdemyLectureAssets):
             title = assets.get("filename")
         if title and title.endswith(self._extension):
             ok = "{0:03d} ".format(parent._lecture_index) + title
-            self._filename = ok
         else:
             ok = "{0:03d} ".format(parent._lecture_index) + assets.get("filename")
-            self._filename = ok
+        self._filename = ok
         self._url = assets.get("download_url")
 
 

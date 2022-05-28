@@ -88,7 +88,7 @@ class Logging(ProgressBar):
         cc_pmsg=None,
     ):
         """This function prints already downloaded msg"""
-        _type = set_color(string="i", level=cc if cc else 80)
+        _type = set_color(string="i", level=cc or 80)
         prefix = (
             "\033[2K\033[1G\r\r"
             + Fore.CYAN
@@ -100,35 +100,33 @@ class Logging(ProgressBar):
             + "] : "
         )
         if indent:
-            prefix = set_color(
-                string=f"\033[2K\033[1G\r\r{indent}", level=cc if cc else 30
-            )
+            prefix = set_color(string=f"\033[2K\033[1G\r\r{indent}", level=cc or 30)
         if status:
             # log.info(f"{msg} ({status})")
             msg = (
-                set_color(f"{msg} (", level=cc_msg if cc_msg else 70)
+                set_color(f"{msg} (", level=cc_msg or 70)
                 + set_color(status, level=80)
-                + set_color(")\r\n", level=70)
-            )
+            ) + set_color(")\r\n", level=70)
+
             string = prefix + msg
             sys.stdout.write(string)
             sys.stdout.flush()
         else:
             if not new_line:
                 # log.info(f"{msg}")
-                msg = set_color(f"{msg}\r", level=cc_msg if cc_msg else 70)
+                msg = set_color(f"{msg}\r", level=cc_msg or 70)
                 string = prefix + msg
                 sys.stdout.write(string)
                 sys.stdout.flush()
             if new_line:
                 if post_msg and cc_pmsg:
                     # log.info(f"{msg}{post_msg}")
-                    msg = set_color(f"{msg}", level=cc_msg if cc_msg else 70)
+                    msg = set_color(f"{msg}", level=cc_msg or 70)
                     post_msg = set_color(string=f"{post_msg}\r\n", level=cc_pmsg)
                     msg += post_msg
                 else:
                     # log.info(f"{msg}")
-                    msg = set_color(f"{msg}\r\n", level=cc_msg if cc_msg else 70)
+                    msg = set_color(f"{msg}\r\n", level=cc_msg or 70)
                 string = prefix + msg
                 if before:
                     string = "\r\n" + string

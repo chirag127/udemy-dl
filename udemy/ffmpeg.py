@@ -49,7 +49,7 @@ class FFMPeg:
         """
         ffmpeg.exe -headers "Authorization: Bearer {token}" -i "" -c copy -bsf:a aac_adtstoasc out.mp4
         """
-        command = [
+        return [
             "ffmpeg",
             "-headers",
             f"Authorization: Bearer {self.token}",
@@ -64,22 +64,18 @@ class FFMPeg:
             "-progress",
             "pipe:2",
         ]
-        return command
 
     def _fetch_total_duration(self, line):
         duration_in_secs = 0
         duration_regex = re.compile(r"Duration: (\d{2}):(\d{2}):(\d{2})\.\d{2}")
-        mobj = duration_regex.search(line)
-        if mobj:
-            duration_tuple = mobj.groups()
-            duration_in_secs = (
-                int(duration_tuple[0]) * 60
-                + int(duration_tuple[1]) * 60
-                + int(duration_tuple[2])
-            )
-        else:
-            duration_in_secs = self.duration
-        return duration_in_secs
+        if not (mobj := duration_regex.search(line)):
+            return self.duration
+        duration_tuple = mobj.groups()
+        return (
+            int(duration_tuple[0]) * 60
+            + int(duration_tuple[1]) * 60
+            + int(duration_tuple[2])
+        )
 
     def _fetch_current_duration_done(self, time_str):
         time_str = time_str.split(":")
@@ -95,15 +91,13 @@ class FFMPeg:
         if hours > 99:
             time_str = "--:--:--"
         if hours == 0:
-            time_str = "%02d:%02ds" % (mins, secs)
+            return "%02d:%02ds" % (mins, secs)
         else:
-            time_str = "%02d:%02d:%02ds" % (hours, mins, secs)
-        return time_str
+            return "%02d:%02d:%02ds" % (hours, mins, secs)
 
     def _progress(
         self, iterations, total, bytesdone, speed, elapsed, bar_length=30, fps=None
     ):
-        offset = 0
         filled_length = int(round(bar_length * iterations / float(total)))
         percents = format(100.00 * (iterations * 1.0 / float(total)), ".2f")
 
@@ -124,6 +118,7 @@ class FFMPeg:
         if fps:
             suffix_rate += f" {fps}/fps"
         if elapsed:
+            offset = 0
             rate = ((float(iterations) - float(offset)) / 1024.0) / elapsed
             eta = (total - iterations) / (rate * 1024.0)
         else:
@@ -145,7 +140,7 @@ class FFMPeg:
         done_time = self._prepare_time_str(iterations)
         downloaded = f"{total_time}/{done_time}"
 
-        received_bytes = str(_received) + str(suffix_recvd)
+        received_bytes = str(_received) + suffix_recvd
         percents = f"{received_bytes} {percents}"
 
         progress.hls_progress(
@@ -158,8 +153,7 @@ class FFMPeg:
         )
 
     def _parse_progress(self, line):
-        items = {key: value for key, value in self._PROGRESS_PATTERN.findall(line)}
-        return items
+        return dict(self._PROGRESS_PATTERN.findall(line))
 
     def download(self):
         total_time = None
@@ -172,8 +166,8 @@ class FFMPeg:
         download_speed = 0
         try:
             with subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            ) as proc:
+                        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                    ) as proc:
                 while active:
                     elapsed = time.time() - t0
                     try:
@@ -204,8 +198,7 @@ class FFMPeg:
                             progress_lines.append(line)
                         else:
                             lines = "\n".join(progress_lines)
-                            items = self._parse_progress(lines)
-                            if items:
+                            if items := self._parse_progress(lines):
                                 secs = self._fetch_current_duration_done(
                                     items.get("out_time")
                                 )
