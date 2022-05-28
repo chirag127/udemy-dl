@@ -77,7 +77,6 @@ class Downloader(object):
         pass
 
     def _write_external_links(self, filepath):
-        retVal = {}
         savedirs, name = os.path.split(filepath)
         filename = u"external-assets-links.txt"
         filename = os.path.join(savedirs, filename)
@@ -90,9 +89,7 @@ class Downloader(object):
             ]
 
         content = u"\n{}\n{}\n".format(name, self.url)
-        if name.lower() not in file_data:
-            retVal = to_file(filename, "a", content)
-        return retVal
+        return to_file(filename, "a", content) if name.lower() not in file_data else {}
 
     def download(
         self,
@@ -117,7 +114,7 @@ class Downloader(object):
 
         filepath = os.path.join(savedir, filename)
         if os.name == "nt" and len(filepath) > 250:
-            filepath = "\\\\?\\{}".format(filepath)
+            filepath = f"\\\\?\\{filepath}"
 
         if self.mediatype == "external_link":
             return self._write_external_links(filepath)
@@ -132,11 +129,11 @@ class Downloader(object):
             retVal = {"status": "True", "msg": "already downloaded"}
             return retVal
 
-        temp_filepath = filepath + ".part"
+        temp_filepath = f"{filepath}.part"
 
         if self.is_hls:
             temp_filepath = filepath.replace(".mp4", "")
-            temp_filepath = temp_filepath + ".hls-part.mp4"
+            temp_filepath = f"{temp_filepath}.hls-part.mp4"
             retVal = FFMPeg(None, self.url, self.token, temp_filepath).download()
             if retVal:
                 self._active = False
@@ -149,7 +146,7 @@ class Downloader(object):
                 offset = os.stat(temp_filepath).st_size
 
             if offset:
-                offset_range = "bytes={}-".format(offset)
+                offset_range = f"bytes={offset}-"
                 headers["Range"] = offset_range
                 bytesdone = offset
                 fmode = "ab"
@@ -165,16 +162,13 @@ class Downloader(object):
                         self.url, headers=headers, stream=True, timeout=10
                     )
                 except conn_error as error:
-                    return {
-                        "status": "False",
-                        "msg": "ConnectionError: %s" % (str(error)),
-                    }
+                    return {"status": "False", "msg": f"ConnectionError: {str(error)}"}
                 if response.ok:
                     bytes_to_be_downloaded = total = int(
                         response.headers.get("Content-Length")
                     )
                     if bytesdone > 0:
-                        bytes_to_be_downloaded = bytes_to_be_downloaded + bytesdone
+                        bytes_to_be_downloaded += bytesdone
                     total = bytes_to_be_downloaded
                     with open(temp_filepath, fmode) as media_file:
                         is_malformed = False
@@ -225,13 +219,14 @@ class Downloader(object):
                     reason = response.reason
                     retVal = {
                         "status": "False",
-                        "msg": "Udemy returned HTTP Code %s: %s" % (code, reason),
+                        "msg": f"Udemy returned HTTP Code {code}: {reason}",
                     }
+
                     response.close()
             except KeyboardInterrupt as error:
                 raise error
             except Exception as error:  # pylint: disable=W
-                retVal = {"status": "False", "msg": "Reason : {}".format(str(error))}
+                retVal = {"status": "False", "msg": f"Reason : {str(error)}"}
                 return retVal
             # # check if file is downloaded completely
             if os.path.isfile(temp_filepath):
@@ -346,15 +341,15 @@ class UdemyCourse(object):
             and not chapter_end
             and isinstance(chapter_number, int)
         ):
-            is_okay = bool(0 < chapter_number <= self.chapters)
+            is_okay = 0 < chapter_number <= self.chapters
             if is_okay:
                 self._chapters = [self._chapters[chapter_number - 1]]
         if chapter_start and not chapter_number and isinstance(chapter_start, int):
-            is_okay = bool(0 < chapter_start <= self.chapters)
+            is_okay = 0 < chapter_start <= self.chapters
             if is_okay:
                 self._chapters = self._chapters[chapter_start - 1 :]
         if chapter_end and not chapter_number and isinstance(chapter_end, int):
-            is_okay = bool(0 < chapter_end <= self.chapters)
+            is_okay = 0 < chapter_end <= self.chapters
             if is_okay:
                 self._chapters = self._chapters[: chapter_end - 1]
         return self._chapters
@@ -371,8 +366,7 @@ class UdemyChapters(object):
         self._lectures = []
 
     def __repr__(self):
-        chapter = "{title}".format(title=self.title)
-        return chapter
+        return "{title}".format(title=self.title)
 
     @property
     def id(self):
@@ -397,15 +391,15 @@ class UdemyChapters(object):
             and not lecture_end
             and isinstance(lecture_number, int)
         ):
-            is_okay = bool(0 < lecture_number <= self.lectures)
+            is_okay = 0 < lecture_number <= self.lectures
             if is_okay:
                 self._lectures = [self._lectures[lecture_number - 1]]
         if lecture_start and not lecture_number and isinstance(lecture_start, int):
-            is_okay = bool(0 < lecture_start <= self.lectures)
+            is_okay = 0 < lecture_start <= self.lectures
             if is_okay:
                 self._lectures = self._lectures[lecture_start - 1 :]
         if lecture_end and not lecture_number and isinstance(lecture_end, int):
-            is_okay = bool(0 < lecture_end <= self.lectures)
+            is_okay = 0 < lecture_end <= self.lectures
             if is_okay:
                 self._lectures = self._lectures[: lecture_end - 1]
         return self._lectures
@@ -430,8 +424,7 @@ class UdemyLectures(object):
         self._subtitles = []
 
     def __repr__(self):
-        lecture = "{title}".format(title=self.title)
-        return lecture
+        return "{title}".format(title=self.title)
 
     @property
     def id(self):
@@ -483,8 +476,7 @@ class UdemyLectures(object):
         def _sortkey(x, keyres=0, keyftype=0):
             keyres = int(x.resolution.split("x")[0])
             keyftype = x.extension
-            st = (keyftype, keyres)
-            return st
+            return keyftype, keyres
 
         self._best = max([i for i in streams if not i.is_hls], key=_sortkey)
         return self._best
@@ -525,13 +517,12 @@ class UdemyLectureStream(Downloader):
         Downloader.__init__(self)
 
     def __repr__(self):
-        out = "%s:%s@%s" % (self.mediatype, self.extension, self.quality)
-        return out
+        return f"{self.mediatype}:{self.extension}@{self.quality}"
 
     def _generate_filename(self):
         ok = re.compile(r'[^\\/:*?"<>|]')
         filename = "".join(x if ok.match(x) else "_" for x in self.title)
-        filename += "." + self.extension
+        filename += f".{self.extension}"
         return filename
 
     @property
@@ -623,14 +614,14 @@ class UdemyLectureAssets(Downloader):
         Downloader.__init__(self)
 
     def __repr__(self):
-        out = "%s:%s@%s" % (self.mediatype, self.extension, self.extension)
-        return out
+        return f"{self.mediatype}:{self.extension}@{self.extension}"
 
     def _generate_filename(self):
         ok = re.compile(r'[^\\/:*?"<>|]')
-        filename = "".join(x if ok.match(x) else "_" for x in self.title)
-        filename += ".{}".format(self.extension)
-        return filename
+        return (
+            "".join(x if ok.match(x) else "_" for x in self.title)
+            + f".{self.extension}"
+        )
 
     @property
     def id(self):
@@ -688,14 +679,14 @@ class UdemyLectureSubtitles(Downloader):
         Downloader.__init__(self)
 
     def __repr__(self):
-        out = "%s:%s@%s" % (self.mediatype, self.language, self.extension)
-        return out
+        return f"{self.mediatype}:{self.language}@{self.extension}"
 
     def _generate_filename(self):
         ok = re.compile(r'[^\\/:*?"<>|]')
-        filename = "".join(x if ok.match(x) else "_" for x in self.title)
-        filename += ".{}.{}".format(self.language, self.extension)
-        return filename
+        return (
+            "".join(x if ok.match(x) else "_" for x in self.title)
+            + f".{self.language}.{self.extension}"
+        )
 
     @property
     def id(self):
@@ -728,16 +719,13 @@ class UdemyLectureSubtitles(Downloader):
         return self._mediatype
 
     def get_subtitle(self, language, preferred_language="en"):
-        _temp = {}
         subtitles = self._parent.subtitles
-        for sub in subtitles:
-            if sub.language == language:
-                _temp[sub.language] = [sub]
+        _temp = {sub.language: [sub] for sub in subtitles if sub.language == language}
         if _temp:
             # few checks to keep things simple :D
             if language in _temp:
                 _temp = _temp[language]
-            elif preferred_language in _temp and not language in _temp:
+            elif preferred_language in _temp:
                 _temp = _temp[preferred_language]
         if not _temp:
             _temp = subtitles

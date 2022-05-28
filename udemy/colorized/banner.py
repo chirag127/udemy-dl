@@ -26,7 +26,8 @@ from .colors import *
 from udemy import __version__
 
 def banner():
-    banner = f'''
+    return (
+        f'''
 %s%s              __                               ____  
 %s%s   __  ______/ /__  ____ ___  __  __      ____/ / /  
 %s%s  / / / / __  / _ \/ __ `__ \/ / / /_____/ __  / /   
@@ -37,5 +38,31 @@ def banner():
                                  %s%sAuthor  : %s%sNasir Khan (r0ot h3x49)
                                  %s%sGithub  : %s%shttps://github.com/r0oth3x49
 
-''' % (fc, sb,fc, sb,fc, sb, fm, sb, fy, sb, fy, sb, fy,sd, fg, sd, fy, sd, fg, sd, fy, sd, fg, sd)
-    return banner
+'''
+        % (
+            fc,
+            sb,
+            fc,
+            sb,
+            fc,
+            sb,
+            fm,
+            sb,
+            fy,
+            sb,
+            fy,
+            sb,
+            fy,
+            sd,
+            fg,
+            sd,
+            fy,
+            sd,
+            fg,
+            sd,
+            fy,
+            sd,
+            fg,
+            sd,
+        )
+    )

@@ -15,12 +15,9 @@ def smart_text(s, encoding="utf-8", errors="strict"):
         return s
 
     if not isinstance(s, six.string_types):
-        if six.PY3:
-            if isinstance(s, bytes):
-                s = six.text_type(s, encoding, errors)
-            else:
-                s = six.text_type(s)
-        elif hasattr(s, "__unicode__"):
+        if six.PY3 and isinstance(s, bytes):
+            s = six.text_type(s, encoding, errors)
+        elif six.PY3 or hasattr(s, "__unicode__"):
             s = six.text_type(s)
         else:
             s = six.text_type(bytes(s), encoding, errors)
@@ -138,5 +135,4 @@ def sanitize(title):
             _temp = _temp.replace(_ascii, _char)
 
     ok = re.compile(r'[^\\/:*?"<>]')
-    _title = "".join(x if ok.match(x) else "_" for x in _temp)
-    return _title
+    return "".join(x if ok.match(x) else "_" for x in _temp)

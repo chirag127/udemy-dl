@@ -37,7 +37,7 @@ class WebVtt2Srt(object):
         try:
             # f = codecs.open(filename=fname, encoding="utf-8", errors="ignore")
             with open(fname, encoding="utf-8", errors="ignore") as f:
-                content = [line for line in (l.strip() for l in f)]
+                content = [l.strip() for l in f]
         except Exception as error:  # pylint: disable=W
             return {
                 "status": "False",
@@ -55,28 +55,23 @@ class WebVtt2Srt(object):
     def _locate_timecode(self, content):
         loc = ""
         for (loc, line) in enumerate(content):
-            match = re.match(self._TIMECODE_REGEX, line, flags=re.U)
-            if match:
+            if match := re.match(self._TIMECODE_REGEX, line, flags=re.U):
                 return {"status": True, "location": loc}
         return {"status": False, "location": loc}
 
     def _is_timecode(self, timecode):
-        match = re.match(self._TIMECODE_REGEX, timecode, flags=re.U)
-        if match:
-            return True
-        return False
+        return bool(match := re.match(self._TIMECODE_REGEX, timecode, flags=re.U))
 
     def _fix_timecode(self, timecode):
         _sdata = len(timecode.split(",")[0])
         if _sdata == 5:
             timecode = "00:{code}".format(code=timecode)
-        if _sdata == 7:
+        elif _sdata == 7:
             timecode = "0{code}".format(code=timecode)
         return timecode
 
     def _generate_timecode(self, sequence, timecode):
-        match = re.match(self._TIMECODE, timecode, flags=re.U)
-        if match:
+        if match := re.match(self._TIMECODE, timecode, flags=re.U):
             start, end = (
                 self._fix_timecode(
                     timecode=re.sub(r"[\.,]", ",", match.group("appeartime"))
@@ -92,30 +87,29 @@ class WebVtt2Srt(object):
 
     def convert(self, filename=None, keep_vtt=False):
         if filename:
-            seq = 1
             fname = filename.replace(".vtt", ".srt")
             content = self._vttcontents(fname=filename)
-            if content and isinstance(content, list):
-                timecode_loc = self._locate_timecode(content)
-                if not timecode_loc.get("status"):
-                    return {
-                        "status": "False",
-                        "msg": "subtitle file seems to have malfunction skipping conversion ..",
-                    }
-                for line in content[timecode_loc.get("location") :]:
-                    flag = self._is_timecode(timecode=line)
-                    if flag:
-                        timecode = self._generate_timecode(seq, unescapeHTML(line))
-                        self._write_srtcontent(fname, timecode)
-                        seq += 1
-                    if not flag:
-                        match = re.match("^([0-9]{1,3})$", line, flags=re.U)
-                        if not match:
-                            data = "{content}\r\n".format(content=line)
-                            self._write_srtcontent(fname, data)
-            else:
+            if not content or not isinstance(content, list):
                 return content
 
+            timecode_loc = self._locate_timecode(content)
+            if not timecode_loc.get("status"):
+                return {
+                    "status": "False",
+                    "msg": "subtitle file seems to have malfunction skipping conversion ..",
+                }
+            seq = 1
+            for line in content[timecode_loc.get("location") :]:
+                flag = self._is_timecode(timecode=line)
+                if flag:
+                    timecode = self._generate_timecode(seq, unescapeHTML(line))
+                    self._write_srtcontent(fname, timecode)
+                    seq += 1
+                if not flag:
+                    match = re.match("^([0-9]{1,3})$", line, flags=re.U)
+                    if not match:
+                        data = "{content}\r\n".format(content=line)
+                        self._write_srtcontent(fname, data)
             if not keep_vtt:
                 try:
                     os.unlink(filename)

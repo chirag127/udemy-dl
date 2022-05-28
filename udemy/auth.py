@@ -56,10 +56,11 @@ class UdemyAuth(object):
                     r'(?is)<form[^>]+?id=(["\'])%s\1[^>]*>(?P<form>.+?)</form>'
                     % form_id,
                     webpage,
-                    "%s form" % form_id,
+                    f"{form_id} form",
                     group="form",
                 )
             )
+
             login_form.update({"email": self.username, "password": self.password})
             return login_form
 
@@ -67,8 +68,7 @@ class UdemyAuth(object):
         is_exists = False
         conf = load_configs()
         if conf:
-            cookies = conf.get("cookies")
-            if cookies:
+            if cookies := conf.get("cookies"):
                 cookies = extract_cookie_string(cookies)
                 access_token = cookies.get("access_token")
                 client_id = cookies.get("client_id")

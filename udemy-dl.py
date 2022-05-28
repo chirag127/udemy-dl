@@ -305,9 +305,8 @@ class Udemy(WebVtt2Srt, ProgressBar):
                 cache_session=self._cache_session,
             )
             course_name = course.title
-            if path:
-                if "~" in path:
-                    path = os.path.expanduser(path)
+            if path and "~" in path:
+                path = os.path.expanduser(path)
             course_path = os.path.join(path, course_name)
             chapters = course.get_chapters(
                 chapter_number=chapter_number,
@@ -354,8 +353,7 @@ class Udemy(WebVtt2Srt, ProgressBar):
                     lecture_index = lecture_number - 1
                 if lecture_start:
                     lecture_index = lecture_start - 1
-                if lecture_index < 0:
-                    lecture_index = 0
+                lecture_index = max(lecture_index, 0)
                 for lecture in lectures:
                     lecture_assets = lecture.assets
                     lecture_subtitles = lecture.subtitles
@@ -581,15 +579,16 @@ def main():
                 args.password = configs.get("password")
             if cookies:
                 args.cookies = cookies
-            args.quality = args.quality if args.quality else configs.get("quality")
-            args.output = args.output if args.output else configs.get("output")
-            args.language = args.language if args.language else configs.get("language")
+            args.quality = args.quality or configs.get("quality")
+            args.output = args.output or configs.get("output")
+            args.language = args.language or configs.get("language")
     url_or_courses = extract_url_or_courses(args.course)
     if not args.username and not args.password and not args.cookies:
         print("\n")
         logger.error(
-            msg=f"You should either provide fresh access token or username/password for udemy.."
+            msg="You should either provide fresh access token or username/password for udemy.."
         )
+
         sys.exit(0)
     udemy_obj = Udemy(
         url_or_courses=url_or_courses,

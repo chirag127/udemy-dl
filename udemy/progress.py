@@ -159,9 +159,9 @@ class ProgressBar(object):
         self._progress(
             _receiving,
             _total_size,
-            file_size=str(_size) + str(suffix_size),
-            downloaded=str(_received) + str(suffix_recvd),
-            rate=str(rate) + str(suffix_rate),
+            file_size=str(_size) + suffix_size,
+            downloaded=str(_received) + suffix_recvd,
+            rate=str(rate) + suffix_rate,
             suffix=str(eta),
             bar_length=30,
         )
