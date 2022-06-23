@@ -88,7 +88,7 @@ class Downloader(object):
                 if i
             ]
 
-        content = u"\n{}\n{}\n".format(name, self.url)
+        content = f"\n{name}\n{self.url}\n"
         return to_file(filename, "a", content) if name.lower() not in file_data else {}
 
     def download(

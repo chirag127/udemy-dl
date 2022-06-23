@@ -77,7 +77,7 @@ class GetPass(object):
                         sys.stdout.flush()
                         pw = pw[:-1]
                         s = "*" * len(pw)
-                        sys.stdout.write("\r\r\r{}{}".format(prompt, s))
+                        sys.stdout.write(f"\r\r\r{prompt}{s}")
                         sys.stdout.flush()
                 elif ord(c) == 27:
                     pass
@@ -93,7 +93,7 @@ class GetPass(object):
                     sys.stdout.flush()
                     pw = pw[:-1]
                     s = "*" * len(pw)
-                    sys.stdout.write("\r\r\r{}{}".format(prompt, s))
+                    sys.stdout.write(f"\r\r\r{prompt}{s}")
                     sys.stdout.flush()
             elif ord(c) == 27:
                 pass

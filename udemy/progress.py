@@ -65,25 +65,9 @@ class ProgressBar(object):
         )
         if "0.00" not in rate:
             sys.stdout.write(
-                "\033[2K\033[1G\r\r{}{}[{}{}*{}{}] : {}{}{}/{} {}% |{}{}{}| {} {}".format(
-                    Fore.CYAN,
-                    Style.DIM,
-                    Fore.MAGENTA,
-                    Style.BRIGHT,
-                    Fore.CYAN,
-                    Style.DIM,
-                    Fore.GREEN,
-                    Style.BRIGHT,
-                    file_size,
-                    downloaded,
-                    percents,
-                    bar,
-                    Fore.GREEN,
-                    Style.BRIGHT,
-                    rate,
-                    suffix,
-                )
+                f"\033[2K\033[1G\r\r{Fore.CYAN}{Style.DIM}[{Fore.MAGENTA}{Style.BRIGHT}*{Fore.CYAN}{Style.DIM}] : {Fore.GREEN}{Style.BRIGHT}{file_size}/{downloaded} {percents}% |{bar}{Fore.GREEN}{Style.BRIGHT}| {rate} {suffix}"
             )
+
             sys.stdout.flush()
 
     def hls_progress(
@@ -98,24 +82,9 @@ class ProgressBar(object):
             + "-" * (bar_length - filled_length)
         )
         sys.stdout.write(
-            "\033[2K\033[1G\r\r{}{}[{}{}*{}{}] : {}{}{} {}% |{}{}{}| {} {}".format(
-                Fore.CYAN,
-                Style.DIM,
-                Fore.MAGENTA,
-                Style.BRIGHT,
-                Fore.CYAN,
-                Style.DIM,
-                Fore.GREEN,
-                Style.BRIGHT,
-                downloaded,
-                percents,
-                bar,
-                Fore.GREEN,
-                Style.BRIGHT,
-                rate,
-                suffix,
-            )
+            f"\033[2K\033[1G\r\r{Fore.CYAN}{Style.DIM}[{Fore.MAGENTA}{Style.BRIGHT}*{Fore.CYAN}{Style.DIM}] : {Fore.GREEN}{Style.BRIGHT}{downloaded} {percents}% |{bar}{Fore.GREEN}{Style.BRIGHT}| {rate} {suffix}"
         )
+
         sys.stdout.flush()
 
     def show_progress(self, total, recvd, ratio, rate, eta):
